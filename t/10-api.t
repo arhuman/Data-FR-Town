@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use Test::More;
 
-
 my $class;
 BEGIN { $class = 'Data::FR::Town'; use_ok $class; }
 
