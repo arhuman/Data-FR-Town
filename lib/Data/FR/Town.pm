@@ -11,13 +11,30 @@ Data::FR::Town - Provides data about french town (INSEE code, ZIP/postal code, n
 
 =head1 VERSION
 
-Version 0.01
+Version 0_03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0_03';
 
-our %TOWNS;
+my %TOWNS;
+
+CHECK {
+    for my $line (<DATA>) {
+        chomp $line;
+
+        my ( $insee, $article, $name, $cname, $zip, $dep, $depname, $origin ) = split ';', $line;
+
+        $TOWNS{insee}{$insee}{article} = $article;
+        $TOWNS{insee}{$insee}{name}    = $name;
+        $TOWNS{insee}{$insee}{cname}   = $cname;
+        $TOWNS{insee}{$insee}{zip}     = $zip;
+        $TOWNS{insee}{$insee}{dep}     = $dep;
+        $TOWNS{insee}{$insee}{depname} = $depname;
+        $TOWNS{insee}{$insee}{origin}  = $origin;
+        $TOWNS{zip}{$zip}              = $class::TOWNS->{insee}{$insee};
+    }
+}
 
 =head1 SYNOPSIS
 
@@ -54,22 +71,6 @@ sub new {
 
     my $self = bless {}, $class;
 
-    for my $line (<DATA>) {
-        chomp $line;
-
-        my ( $insee, $article, $name, $cname, $zip, $dep, $depname, $origin ) = split ';', $line;
-
-        $class::TOWNS{insee}{$insee}{article} = $article;
-        $class::TOWNS{insee}{$insee}{name}    = $name;
-        $class::TOWNS{insee}{$insee}{cname}   = $cname;
-        $class::TOWNS{insee}{$insee}{zip}     = $zip;
-        $class::TOWNS{insee}{$insee}{dep}     = $dep;
-        $class::TOWNS{insee}{$insee}{depname} = $depname;
-        $class::TOWNS{insee}{$insee}{origin}  = $origin;
-        $class::TOWNS{zip}{$zip}              = $class::TOWNS->{insee}{$insee};
-
-    }
-
     for my $param ( keys %{$params} ) {
         if ( $param =~ /insee/ ) {
             return $class->find( { insee => $params->{$param} } );
@@ -97,10 +98,11 @@ sub find {
     my $params = shift;
 
     $class = ref $class if ref $class;
+    
 
     for my $param ( keys %$params ) {
-        if ( $class::TOWNS{$param}{ $params->{$param} } ) {
-            return bless $class::TOWNS{$param}{ $params->{$param} }, $class;
+        if ( $TOWNS{$param}{ $params->{$param} } ) {
+            return bless $TOWNS{$param}{ $params->{$param} }, $class;
         } else {
             croak "Unknown parameter : $param" unless $param =~ /(zip|insee)/;
             return undef;
